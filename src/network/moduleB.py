@@ -2,18 +2,17 @@ import torch
 from torch.nn import Module, Sequential, Linear, Embedding, Dropout, ReLU, CosineSimilarity
 from .layers import NeighborEncoder, Similarity
 
-class NeuralScoringModel(Module):
+class NeuralScoringModelB(Module):
 
     def __init__(self, 
                 d,
-                field_embeddings,
-                text_embeddings,
+                embedding_size,
                 attention_num,
                 dropout_rate):
-        super(NeuralScoringModel, self).__init__()
-        self.field_embedding = Sequential(Embedding.from_pretrained(field_embeddings), Linear(text_embeddings.size()[1], d))
+        super(NeuralScoringModelB, self).__init__()
+        self.field_embedding = Linear(embedding_size, d)
         self.cand_position_embedding = Linear(2, d)
-        self.text_embedding = Sequential(Embedding.from_pretrained(text_embeddings), Linear(text_embeddings.size()[1], d))
+        self.text_embedding = Linear(embedding_size, d)
         self.neighbor_position_embedding = Sequential(Linear(2, d),
                                                     ReLU(),
                                                     Dropout(p=dropout_rate),
@@ -26,14 +25,14 @@ class NeuralScoringModel(Module):
         self.scorer = Similarity()
 
     def forward(self, inputs):
-        field_id = inputs["field_id"]
+        field_embed = inputs["field_embed"]
         cand_pos = inputs["cand_pos"]
-        neighbor_id = inputs["neighbor_id"]
+        neighbor_embed = inputs["neighbor_embed"]
         neighbor_pos = inputs["neighbor_pos"]
 
-        field_embed = self.field_embedding(field_id)
+        field_embed = self.field_embedding(field_embed)
         cand_pos_embed = self.cand_position_embedding(cand_pos)
-        text_embed = self.text_embedding(neighbor_id)
+        text_embed = self.text_embedding(neighbor_embed)
         pos_embed = self.neighbor_position_embedding(neighbor_pos)
 
         H = torch.cat((text_embed, pos_embed), dim=-1)

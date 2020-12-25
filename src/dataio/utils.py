@@ -1,6 +1,8 @@
 import re
 # import datefinder
 from nltk.tokenize import word_tokenize
+import torch
+import numpy as np
 
 def is_date(text):
     pattern = r"\d{2,4}[.-/]\d{2}[.-/]\d{2,4}"
@@ -41,3 +43,21 @@ def get_word_from_text(text):
         return valid_tokens[0]
     else:
         return text
+
+def stack(T):
+    if isinstance(T, torch.Tensor):
+        return T
+    elif isinstance(T, np.ndarray):
+        return T
+    elif isinstance(T, list):
+        if len(T) == 0:
+            return torch.from_numpy(np.array([], dtype=np.float32))
+        t_list = []
+        for t in T:
+            t_list.append(stack(t))
+        if isinstance(t_list[0], torch.Tensor):
+            return torch.stack(t_list)
+        if isinstance(t_list[0], np.ndarray):
+            return np.stack(t_list)
+    else:
+        raise Exception("%s data type is not supported"%type(T))

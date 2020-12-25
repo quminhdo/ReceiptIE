@@ -3,7 +3,7 @@ import numpy as np
 import os
 from sklearn.metrics import roc_auc_score, f1_score
 
-class Estimator:
+class EstimatorB:
 
     def __init__(self,
                 net,
@@ -57,9 +57,9 @@ class Estimator:
             page_data = train_set.get_single_page_data(i)
             for field_type, cand_data in page_data.items():
                 inputs = {}
-                for k in ["field_id", "cand_pos", "neighbor_id", "neighbor_pos"]:
-                    inputs[k] = torch.from_numpy(cand_data[k]).to(self.device)
-                labels = torch.from_numpy(cand_data["label"]).to(self.device)
+                for k in ["field_embed", "cand_pos", "neighbor_embed", "neighbor_pos"]:
+                    inputs[k] = cand_data[k].to(self.device)
+                labels = cand_data["label"].to(self.device)
                 j = 0
                 while j < len(labels):
                     batch_num += 1
@@ -90,9 +90,12 @@ class Estimator:
             page_data = test_set.get_single_page_data(i)
             for field_type, cand_data in page_data.items():
                 inputs = {}
-                for k in ["field_id", "cand_pos", "neighbor_id", "neighbor_pos"]:
-                    inputs[k] = torch.from_numpy(cand_data[k]).to(self.device)
-                labels = torch.from_numpy(cand_data["label"]).to(self.device)
+                # for k in ["field_id", "cand_pos", "neighbor_id", "neighbor_pos"]:
+                #     inputs[k] = torch.from_numpy(cand_data[k]).to(self.device)
+                # labels = torch.from_numpy(cand_data["label"]).to(self.device)
+                for k in ["field_embed", "cand_pos", "neighbor_embed", "neighbor_pos"]:
+                    inputs[k] = cand_data[k].to(self.device)
+                labels = cand_data["label"].to(self.device)
                 j = 0
                 while j < len(labels):
                     batch_num += 1

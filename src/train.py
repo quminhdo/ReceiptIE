@@ -3,11 +3,10 @@ import torch
 from torch.nn import BCELoss
 from network import get_network
 from optimizer import get_optimizer
+from dataio import get_dataset
+from estimator import get_estimator
 from utils import json_file_to_pyobj, get_embeddings
-from dataio.dataset import ReceiptDataset
 from argparse import ArgumentParser
-from estimator import Estimator
-
 def main(cf):
 
     net_opt = cf.network
@@ -31,14 +30,15 @@ def main(cf):
     criterion = BCELoss()
     optimizer = get_optimizer(train_opt.optimizer, net.parameters())
 
-    train_set = ReceiptDataset(data_opt, "train")
-    val_set = ReceiptDataset(data_opt, "val")
+    train_set = get_dataset(data_opt, "train")
+    val_set = get_dataset(data_opt, "val")
 
-    estimator = Estimator(net=net,
-                        criterion=criterion,
-                        optimizer=optimizer,
-                        device=device,
-                        ckpt_dir=ckpt_dir)
+    estimator = get_estimator(name=cf.estimator,
+                            net=net,
+                            criterion=criterion,
+                            optimizer=optimizer,
+                            device=device,
+                            ckpt_dir=ckpt_dir)
 
     print("Training...")
     estimator.train(train_set=train_set, 

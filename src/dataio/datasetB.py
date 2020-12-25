@@ -5,8 +5,11 @@ import random
 import re
 import os
 import cv2
+import torch
 import numpy as np
-from .utils import find_nth, get_word_type, get_word_from_text, is_number
+from flair.embeddings import WordEmbeddings, BytePairEmbeddings, StackedEmbeddings
+from flair.data import Sentence
+from .utils import find_nth, get_word_type, get_word_from_text, is_number, stack
 from .box import Box, Component, get_intersection_box
 
 class OCR_Word(Box):
@@ -42,8 +45,8 @@ class Neighbor(Component):
 
         super(Neighbor, self).__init__(text=text, x1=x1, y1=y1, x2=x2, y2=y2,
                                         page_width=page_width, page_height=page_height)
-        if is_number(self.text):
-            self.text = "[NUMBER]"
+        # if is_number(self.text):
+        #     self.text = "[NUMBER]"
         self.xc0, self.yc0 = origin_coords
 
     @property
@@ -114,7 +117,7 @@ class Candidate(Component):
     def position(self):
         return self.norm_xc, self.norm_yc
 
-class ReceiptDataset:
+class ReceiptDatasetB:
 
     def __init__(self, opt, split):
         file_names = self.get_file_names(os.path.join(opt.split_dir, "%s_list.txt"%split))
@@ -123,6 +126,15 @@ class ReceiptDataset:
         self.max_neighbors = opt.max_neighbors
         self.word2id = self.get_word2id(opt.vocab_file)
         self.split = split
+
+        self.embeddings = StackedEmbeddings(
+            [
+                # standard FastText word embeddings for English
+                WordEmbeddings('en'),
+                # Byte pair embeddings for English
+                BytePairEmbeddings('en'),
+            ]
+        )
 
     def __len__(self):
         return len(self.ie_files)
@@ -144,12 +156,12 @@ class ReceiptDataset:
                 if wtype == "NUMBER":
                     field_type = "TOTAL"
                 candidate_dict[field_type].append(Candidate(text=word.text, 
-                                                    wtype=wtype,
-                                                    word_ids=[word.id],
-                                                    words=words,
-                                                    page_width=width,
-                                                    page_height=height,
-                                                    max_neighbors=self.max_neighbors))
+                                                            wtype=wtype,
+                                                            word_ids=[word.id],
+                                                            words=words,
+                                                            page_width=width,
+                                                            page_height=height,
+                                                            max_neighbors=self.max_neighbors))
         return candidate_dict
 
     def get_single_page_data(self, idx):
@@ -160,24 +172,30 @@ class ReceiptDataset:
         candidate_dict = self.generate_candidates(idx)
         data = {}
         for field_type, cands in candidate_dict.items():
-            field_id_list = []
+            field_embed_list = []
             cand_pos_list = []
-            neighbor_id_list = []
+            neighbor_embed_list = []
             neighbor_pos_list = []
             label_list = []
             random.shuffle(cands)
             for cand in cands:
-                field_id_list.append(self.word2id[field_type.lower()])
+                field_embed_list.append(self.word2vec(field_type.lower()))
                 cand_pos_list.append(list(cand.position))
-                neighbor_id_list.append([self.word2id[neighbor.text] for neighbor in cand.neighbors])
+                neighbor_embed_list.append([self.word2vec(neighbor.text) for neighbor in cand.neighbors])
                 neighbor_pos_list.append([list(neighbor.position) for neighbor in cand.neighbors])
                 label_list.append(int(cand.text == gt[field_type]))
-            data[field_type] = {"field_id": np.array(field_id_list, dtype=np.int64),
-                                "cand_pos": np.array(cand_pos_list, dtype=np.float32),
-                                "neighbor_id": np.array(neighbor_id_list, dtype=np.int64),
-                                "neighbor_pos": np.array(neighbor_pos_list, dtype=np.float32),
-                                "label": np.array(label_list, dtype=np.float32)}
+            data[field_type] = {"field_embed": stack(field_embed_list),
+                                "cand_pos": torch.from_numpy(np.array(cand_pos_list, dtype=np.float32)),
+                                "neighbor_embed": stack(neighbor_embed_list),
+                                "neighbor_pos": torch.from_numpy(np.array(neighbor_pos_list, dtype=np.float32)),
+                                "label": torch.from_numpy(np.array(label_list, dtype=np.float32))}
         return data
+
+    def word2vec(self, word):
+        sentence = Sentence(word, use_tokenizer=False)
+        self.embeddings.embed(sentence)
+        tok = sentence.tokens[0]
+        return tok.embedding
 
     def get_page_width_height(self, idx):
         img = cv2.imread("%s.jpg"%self.ie_files[idx])

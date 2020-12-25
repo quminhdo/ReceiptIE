@@ -1,0 +1,33 @@
+{
+    "cuda": true,
+    "ckpt_dir": "ckpt",
+    "estimator": "EstimatorB",
+    "train": {
+        "epoch_num": 10,
+        "batch_size": 4,
+        "patience": -1,
+        "optimizer": {
+            "name": "RAdam",
+            "lr": 1e-4
+        }
+    },
+    "data": {
+        "dataset": "ReceiptDatasetB",
+        "ie_data_dir": "clean_data/ie_data",
+        "ocr_data_dir": "ocr_result",
+        "split_dir": "splits",
+        "vocab_file": "splits/vocab.txt",
+        "word2vec_file": "splits/w2v-300",
+        "max_neighbors": 30
+    },
+    "network": {
+        "name": "NeuralScoringModelB",
+        "hidden_size": 512,
+        "embedding_size": 400,
+        "attention_num": 1,
+        "dropout": 0.5
+    },
+    "eval":{
+        "thresholds": [0.3, 0.4, 0.5, 0.6, 0.7]
+    }
+}
