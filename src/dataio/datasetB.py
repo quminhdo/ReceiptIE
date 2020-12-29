@@ -16,7 +16,8 @@ class OCR_Word(Box):
 
     def __init__(self, info):
         sep = find_nth(info, ",", 8)
-        self.text = get_word_from_text(info[sep+1:]).lower()
+        # self.text = get_word_from_text(info[sep+1:]).lower()
+        self.text = info[sep+1:].lower()
         self.x1, self.y1, _, _, self.x2, self.y2, _, _ = [int(x) for x in info[:sep].split(",")]
         self.id = None
 
@@ -150,10 +151,10 @@ class ReceiptDatasetB:
         candidate_dict = {"DATE": [], "TOTAL": []}
         for word in words:
             wtype = get_word_type(word.text)
-            if wtype in ["DATE", "NUMBER"]:
+            if wtype in ["DATE", "CURRENCY"]:
                 if wtype == "DATE":
                     field_type = "DATE"
-                if wtype == "NUMBER":
+                if wtype == "CURRENCY":
                     field_type = "TOTAL"
                 candidate_dict[field_type].append(Candidate(text=word.text, 
                                                             wtype=wtype,

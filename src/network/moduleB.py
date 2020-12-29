@@ -19,7 +19,7 @@ class NeuralScoringModelB(Module):
                                                     Linear(d, d),
                                                     ReLU(),
                                                     Dropout(p=dropout_rate))
-        self.neighbor_encoder = NeighborEncoder(d, attention_num)
+        self.neighbor_encoder = NeighborEncoder(d, attention_num, dropout_rate)
         self.candidate_encoder = Sequential(Linear(3*d, d),
                                             ReLU())
         self.scorer = Similarity()

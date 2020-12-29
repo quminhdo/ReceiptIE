@@ -6,7 +6,7 @@ import re
 import os
 import cv2
 import numpy as np
-from .utils import find_nth, get_word_type, get_word_from_text, is_number
+from .utils import find_nth, get_word_type, get_word_from_text, is_number, is_currency
 from .box import Box, Component, get_intersection_box
 
 class OCR_Word(Box):
@@ -103,11 +103,7 @@ class Candidate(Component):
             neighbors = neighbors[:self.max_neighbors]
         else:
             for _ in range(self.max_neighbors - len(neighbors)):
-                x1 = random.choice(range(self.neighborhood.x1, self.neighborhood.x2))
-                y1 = random.choice(range(self.neighborhood.y1, self.neighborhood.y2))
-                x2 = random.choice(range(x1, self.neighborhood.x2))
-                y2 = random.choice(range(y1, self.neighborhood.y2))
-                neighbors.append(Neighbor(text="[PAD]", x1=x1, y1=y1, x2=x2, y2=y2, page_width=self.pw, page_height=self.ph, origin_coords=self.position))
+                neighbors.append(Neighbor(text="[PAD]", x1=self.x1, y1=self.y1, x2=self.x2, y2=self.y2, page_width=self.pw, page_height=self.ph, origin_coords=self.position))
         return neighbors
 
     @property
@@ -132,16 +128,16 @@ class ReceiptDatasetA:
         width, height = self.get_page_width_height(idx)
         for i, word in enumerate(words):
             word.id = i
-            if self.split == "train":
-                word.resize_randomly(width, height, 0.1)
+            # if self.split == "train":
+            #     word.resize_randomly(width, height, 0.1)
 
         candidate_dict = {"DATE": [], "TOTAL": []}
         for word in words:
             wtype = get_word_type(word.text)
-            if wtype in ["DATE", "NUMBER"]:
+            if wtype in ["DATE", "CURRENCY"]:
                 if wtype == "DATE":
                     field_type = "DATE"
-                if wtype == "NUMBER":
+                if wtype == "CURRENCY":
                     field_type = "TOTAL"
                 candidate_dict[field_type].append(Candidate(text=word.text, 
                                                         wtype=wtype,

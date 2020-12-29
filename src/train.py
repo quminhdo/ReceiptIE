@@ -23,8 +23,11 @@ def main(cf):
     else:
         device = torch.device("cpu")
 
-    embeddings = get_embeddings(vocab_file=data_opt.vocab_file, word2vec_file=data_opt.word2vec_file)
-
+    if net_opt.name == "NeuralScoringModelA":
+        embeddings = get_embeddings(vocab_file=data_opt.vocab_file, word2vec_file=data_opt.word2vec_file)
+    else:
+        embeddings = None
+        
     net = get_network(opt=net_opt, embeddings=embeddings)
     net = net.to(device)
     criterion = BCELoss()

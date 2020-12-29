@@ -5,9 +5,17 @@ import torch
 import numpy as np
 
 def is_date(text):
-    pattern = r"\d{2,4}[.-/]\d{2}[.-/]\d{2,4}"
+    pattern = r"\d{1,4}[.\-/](\d{1,2}|[a-zA-Z]{3})[.\-/]\d{2,4}"
     m = re.search(pattern, text)
     return m is not None
+
+def is_currency(word):
+    matches = re.findall(r"-{0,1}\d+\.\d+", word)
+    if len(matches) != 1:
+        return False
+    if float(matches[0]) <= 0:
+        return False
+    return True
 
 def is_number(word):
     try:
@@ -19,6 +27,8 @@ def is_number(word):
 def get_word_type(word):
     if is_date(word):
         return "DATE"
+    if is_currency(word):
+        return "CURRENCY"
     if is_number(word):
         return "NUMBER"
     if word.isalpha():

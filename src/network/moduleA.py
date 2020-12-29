@@ -4,7 +4,7 @@ from .layers import NeighborEncoder, Similarity
 
 class NeuralScoringModelA(Module):
 
-    def __init__(self, 
+    def __init__(self,
                 d,
                 field_embeddings,
                 text_embeddings,
@@ -20,7 +20,7 @@ class NeuralScoringModelA(Module):
                                                     Linear(d, d),
                                                     ReLU(),
                                                     Dropout(p=dropout_rate))
-        self.neighbor_encoder = NeighborEncoder(d, attention_num)
+        self.neighbor_encoder = NeighborEncoder(d, attention_num, dropout_rate)
         self.candidate_encoder = Sequential(Linear(3*d, d),
                                             ReLU())
         self.scorer = Similarity()

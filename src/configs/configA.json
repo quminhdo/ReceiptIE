@@ -3,7 +3,7 @@
     "ckpt_dir": "ckpt",
     "estimator": "EstimatorA",
     "train": {
-        "epoch_num": 10,
+        "epoch_num": 30,
         "batch_size": 4,
         "patience": -1,
         "optimizer": {
@@ -22,7 +22,7 @@
     },
     "network": {
         "name": "NeuralScoringModelA",
-        "hidden_size": 512,
+        "hidden_size": 256,
         "attention_num": 1,
         "dropout": 0.5
     },
